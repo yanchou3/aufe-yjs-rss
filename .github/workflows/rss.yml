@@ -1,0 +1,35 @@
+name: 抓取研究生院官网生成 RSS
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # 每 30 分钟一次
+  workflow_dispatch: # 允许在 Actions 页面手动触发
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-rss
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 抓取并生成订阅源
+        run: python3 fetch_rss.py
+
+      - name: 有更新则提交推送
+        run: |
+          git config user.name "aufe-rss-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rss/
+          if git diff --cached --quiet; then
+            echo "内容无变化，跳过提交"
+          else
+            git commit -m "update: $(date -u '+%Y-%m-%d %H:%M') UTC"
+            git push
+          fi
