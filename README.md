@@ -14,9 +14,12 @@
 | 奖助学金 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jzxj.xml |
 | **全部栏目合并** | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/all.xml |
 
-一键导入全部订阅源（OPML）：`https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/feeds.opml`
+一键导入全部订阅源（OPML，二选一）：
 
-> 国内直连 `raw.githubusercontent.com` 不稳定，可以把本仓库发布到 Cloudflare Pages / Vercel 等国内可达的静态托管后订阅镜像地址。
+- `https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/feeds.opml` —— 直连版，适合海外或可直连 GitHub 的网络
+- `https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/feeds-cn.opml` —— 国内镜像版，订阅地址走 ghproxy.net 代理（国内网络推荐用这份）
+
+> **国内网络注意**：`raw.githubusercontent.com` 直连基本不可用，订阅和 OPML 导入都建议走镜像版；或把仓库发布到 Cloudflare Pages 后订阅镜像地址。上面镜像地址的手动替换规则是：在任意订阅 URL 前面加 `https://ghproxy.net/`。
 
 ## 工作方式
 

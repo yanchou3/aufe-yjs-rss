@@ -30,6 +30,7 @@ TIMEOUT = 30
 DELAY_RANGE = (2.0, 5.0)  # 栏目之间的随机间隔（秒），避免触发 WAF
 RETRY_DELAYS = (8, 20)  # 被拦截后的退避等待（秒）
 MAX_MERGED = 100
+MIRROR_PREFIX = "https://ghproxy.net/"  # 国内镜像代理前缀，用于 feeds-cn.opml
 
 HEADERS = {
     "User-Agent": (
@@ -140,22 +141,31 @@ def build_rss(title: str, link: str, description: str, items: list[dict]) -> str
     return "\n".join(parts)
 
 
-def build_opml(public_base: str) -> str:
+def build_opml(public_base: str, mirror_prefix: str = "") -> str:
+    """生成扁平结构的 OPML（部分阅读器不兼容嵌套文件夹）。
+
+    mirror_prefix 传代理前缀（如 https://ghproxy.net/）时，
+    订阅地址会变成镜像地址，供直连 raw.githubusercontent.com 困难的网络使用。
+    """
+    now = email.utils.format_datetime(datetime.now(TZ))
     parts = [
         '<?xml version="1.0" encoding="utf-8"?>',
         '<opml version="2.0">',
-        "  <head><title>安徽财经大学研究生院 RSS</title></head>",
+        "  <head>",
+        "    <title>安徽财经大学研究生院 RSS</title>",
+        f"    <dateCreated>{now}</dateCreated>",
+        "    <ownerName>aufe-yjs-rss</ownerName>",
+        "  </head>",
         "  <body>",
-        '    <outline text="安徽财经大学研究生院">',
     ]
     feeds = [(name, f"{public_base}/{slug}.xml", BASE + path) for slug, name, path in SECTIONS]
     feeds.append(("研究生院·全部更新", f"{public_base}/all.xml", BASE + "/"))
     for name, xml_url, html_url in feeds:
         parts.append(
-            f'      <outline type="rss" text="{attr_escape(name)}" title="{attr_escape(name)}" '
-            f'xmlUrl="{attr_escape(xml_url)}" htmlUrl="{attr_escape(html_url)}"/>'
+            f'    <outline type="rss" text="{attr_escape(name)}" title="{attr_escape(name)}" '
+            f'xmlUrl="{attr_escape(mirror_prefix + xml_url)}" htmlUrl="{attr_escape(html_url)}"/>'
         )
-    parts += ["    </outline>", "  </body>", "</opml>", ""]
+    parts += ["  </body>", "</opml>", ""]
     return "\n".join(parts)
 
 
@@ -212,6 +222,7 @@ def main() -> int:
         ),
     )
     write(OUT_DIR / "feeds.opml", build_opml(public_base))
+    write(OUT_DIR / "feeds-cn.opml", build_opml(public_base, MIRROR_PREFIX))
     print(f"完成：{ok}/{len(SECTIONS)} 个栏目，合并去重后 {len(merged[:MAX_MERGED])} 条")
     return 0
 

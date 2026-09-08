@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <opml version="2.0">
-  <head><title>安徽财经大学研究生院 RSS</title></head>
+  <head>
+    <title>安徽财经大学研究生院 RSS</title>
+    <dateCreated>Tue, 08 Sep 2026 13:24:45 +0800</dateCreated>
+    <ownerName>aufe-yjs-rss</ownerName>
+  </head>
   <body>
-    <outline text="安徽财经大学研究生院">
-      <outline type="rss" text="研究生院·新闻动态" title="研究生院·新闻动态" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwdt.xml" htmlUrl="https://yjs.aufe.edu.cn/2874/list.htm"/>
-      <outline type="rss" text="研究生院·教学工作通知" title="研究生院·教学工作通知" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jxgz.xml" htmlUrl="https://yjs.aufe.edu.cn/2879/list.htm"/>
-      <outline type="rss" text="研究生院·学位工作通知" title="研究生院·学位工作通知" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwgz.xml" htmlUrl="https://yjs.aufe.edu.cn/2895/list.htm"/>
-      <outline type="rss" text="研究生院·学术看板" title="研究生院·学术看板" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xskb.xml" htmlUrl="https://yjs.aufe.edu.cn/2884/list.htm"/>
-      <outline type="rss" text="研究生院·学生管理" title="研究生院·学生管理" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xsgl.xml" htmlUrl="https://yjs.aufe.edu.cn/2927/list.htm"/>
-      <outline type="rss" text="研究生院·奖助学金" title="研究生院·奖助学金" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jzxj.xml" htmlUrl="https://yjs.aufe.edu.cn/2928/list.htm"/>
-      <outline type="rss" text="研究生院·全部更新" title="研究生院·全部更新" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/all.xml" htmlUrl="https://yjs.aufe.edu.cn/"/>
-    </outline>
+    <outline type="rss" text="研究生院·新闻动态" title="研究生院·新闻动态" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwdt.xml" htmlUrl="https://yjs.aufe.edu.cn/2874/list.htm"/>
+    <outline type="rss" text="研究生院·教学工作通知" title="研究生院·教学工作通知" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jxgz.xml" htmlUrl="https://yjs.aufe.edu.cn/2879/list.htm"/>
+    <outline type="rss" text="研究生院·学位工作通知" title="研究生院·学位工作通知" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwgz.xml" htmlUrl="https://yjs.aufe.edu.cn/2895/list.htm"/>
+    <outline type="rss" text="研究生院·学术看板" title="研究生院·学术看板" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xskb.xml" htmlUrl="https://yjs.aufe.edu.cn/2884/list.htm"/>
+    <outline type="rss" text="研究生院·学生管理" title="研究生院·学生管理" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xsgl.xml" htmlUrl="https://yjs.aufe.edu.cn/2927/list.htm"/>
+    <outline type="rss" text="研究生院·奖助学金" title="研究生院·奖助学金" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jzxj.xml" htmlUrl="https://yjs.aufe.edu.cn/2928/list.htm"/>
+    <outline type="rss" text="研究生院·全部更新" title="研究生院·全部更新" xmlUrl="https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/all.xml" htmlUrl="https://yjs.aufe.edu.cn/"/>
   </body>
 </opml>
