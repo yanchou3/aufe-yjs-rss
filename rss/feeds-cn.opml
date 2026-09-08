@@ -2,7 +2,7 @@
 <opml version="2.0">
   <head>
     <title>安徽财经大学研究生院 RSS</title>
-    <dateCreated>Tue, 08 Sep 2026 14:08:06 +0800</dateCreated>
+    <dateCreated>Tue, 08 Sep 2026 14:26:25 +0800</dateCreated>
     <ownerName>aufe-yjs-rss</ownerName>
   </head>
   <body>
@@ -12,6 +12,9 @@
     <outline type="rss" text="研究生院·学术看板" title="研究生院·学术看板" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xskb.xml" htmlUrl="https://yjs.aufe.edu.cn/2884/list.htm"/>
     <outline type="rss" text="研究生院·学生管理" title="研究生院·学生管理" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xsgl.xml" htmlUrl="https://yjs.aufe.edu.cn/2927/list.htm"/>
     <outline type="rss" text="研究生院·奖助学金" title="研究生院·奖助学金" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jzxj.xml" htmlUrl="https://yjs.aufe.edu.cn/2928/list.htm"/>
+    <outline type="rss" text="教务处·政策文件" title="教务处·政策文件" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jwc-zcwj.xml" htmlUrl="https://jwc.aufe.edu.cn/10354/list.htm"/>
+    <outline type="rss" text="教务处·新闻动态" title="教务处·新闻动态" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jwc-xwdt.xml" htmlUrl="https://jwc.aufe.edu.cn/10355/list.htm"/>
+    <outline type="rss" text="教务处·通知公告" title="教务处·通知公告" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jwc-tzgg.xml" htmlUrl="https://jwc.aufe.edu.cn/10356/list.htm"/>
     <outline type="rss" text="研究生院·全部更新" title="研究生院·全部更新" xmlUrl="https://ghproxy.net/https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/all.xml" htmlUrl="https://yjs.aufe.edu.cn/"/>
   </body>
 </opml>
