@@ -26,7 +26,7 @@ jobs:
         run: |
           git config user.name "aufe-rss-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add rss/
+          git add rss/ state/
           if git diff --cached --quiet; then
             echo "内容无变化，跳过提交"
           else

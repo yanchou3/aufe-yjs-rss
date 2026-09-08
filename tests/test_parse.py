@@ -7,9 +7,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from fetch_rss import parse_items  # noqa: E402
+from fetch_rss import clean_content, extract_div, parse_items  # noqa: E402
 
 FIXTURE = Path(__file__).resolve().parent / "news_list_2874.html"
+ARTICLE = Path(__file__).resolve().parent / "article_sample.html"
 
 # 服务器原始 HTML 用单引号包属性，与浏览器渲染的双引号不同，两种都要能解析
 RAW_SINGLE_QUOTE = (
@@ -54,10 +55,32 @@ class TestParse(unittest.TestCase):
             "https://yjs.aufe.edu.cn/2026/0717/c2874a253649/page.htm",
         )
 
-    def test_dates_sorted_input_not_required(self):
+    def test_duplicate_links_deduped(self):
         items = parse_items(RAW_SINGLE_QUOTE + RAW_SINGLE_QUOTE)
         # 同一链接去重后只剩 1 条
         self.assertEqual(len(items), 1)
+
+
+class TestArticleContent(unittest.TestCase):
+    def test_extract_div_balanced(self):
+        raw = extract_div(ARTICLE.read_text(encoding="utf-8"), "wp_articlecontent")
+        self.assertIsNotNone(raw)
+        self.assertIn("暑期学术训练营", raw)
+        self.assertIn("（文/图：兰轲轲；审核：张超）", raw)
+        # 嵌套 div 配对正确：不应包含外层 article 的标题和 meta
+        self.assertNotIn("arti_title", raw)
+
+    def test_clean_content(self):
+        raw = extract_div(ARTICLE.read_text(encoding="utf-8"), "wp_articlecontent")
+        cleaned = clean_content(raw)
+        # 相对图片地址转绝对
+        self.assertIn('src="https://yjs.aufe.edu.cn/_upload/article/images/', cleaned)
+        # 内联样式被去除
+        self.assertNotIn("style=", cleaned)
+        self.assertNotIn("sudyfile-attr", cleaned)
+        # 保留段落和文本
+        self.assertIn("<p>", cleaned)
+        self.assertIn("人工智能对经济学研究范式的重构", cleaned)
 
 
 if __name__ == "__main__":
