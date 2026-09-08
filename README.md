@@ -6,12 +6,15 @@
 
 | 栏目 | 订阅 URL |
 | --- | --- |
-| 新闻动态 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwdt.xml |
-| 教学工作通知 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jxgz.xml |
-| 学位工作通知 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwgz.xml |
-| 学术看板 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xskb.xml |
-| 学生管理 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xsgl.xml |
-| 奖助学金 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jzxj.xml |
+| 研究生院·新闻动态 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwdt.xml |
+| 研究生院·教学工作通知 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jxgz.xml |
+| 研究生院·学位工作通知 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xwgz.xml |
+| 研究生院·学术看板 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xskb.xml |
+| 研究生院·学生管理 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/xsgl.xml |
+| 研究生院·奖助学金 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jzxj.xml |
+| 教务处·政策文件 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jwc-zcwj.xml |
+| 教务处·新闻动态 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jwc-xwdt.xml |
+| 教务处·通知公告 | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/jwc-tzgg.xml |
 | **全部栏目合并** | https://raw.githubusercontent.com/yanchou3/aufe-yjs-rss/main/rss/all.xml |
 
 一键导入全部订阅源（OPML，二选一）：

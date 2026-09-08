@@ -60,6 +60,26 @@ class TestParse(unittest.TestCase):
         # 同一链接去重后只剩 1 条
         self.assertEqual(len(items), 1)
 
+    def test_jwc_list_item_template(self):
+        # 教务处的 wp_article_list 模板（Article_Title / Article_PublishDate）
+        raw = (
+            '<ul class="wp_article_list">'
+            '<li class="list_item i1 clearfix">'
+            '<div class="fields pr_fields"><span class="Article_Title">'
+            '<a href="/2025/0224/c10355a228918/page.htm" target="_blank" '
+            'title="【学科竞赛】关于举办计算机设计大赛校内选拔赛的通知">标题文本</a></span></div>'
+            '<div class="fields ex_fields"><span class="Article_PublishDate">2025-02-24</span></div>'
+            "</li></ul>"
+        )
+        items = parse_items(raw, "https://jwc.aufe.edu.cn")
+        self.assertEqual(len(items), 1)
+        # 链接必须按教务处站点解析，而不是默认的研究生院
+        self.assertEqual(
+            items[0]["link"],
+            "https://jwc.aufe.edu.cn/2025/0224/c10355a228918/page.htm",
+        )
+        self.assertIn("计算机设计大赛", items[0]["title"])
+
 
 class TestArticleContent(unittest.TestCase):
     def test_extract_div_balanced(self):

@@ -27,7 +27,7 @@ import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from xml.sax.saxutils import escape
 
 BASE = "https://yjs.aufe.edu.cn"
@@ -52,14 +52,18 @@ HEADERS = {
     "Accept-Language": "zh-CN,zh;q=0.9",
 }
 
-# 要生成订阅源的栏目：(文件名 slug, 订阅标题, 栏目路径)。增删栏目只改这里。
+# 要生成订阅源的栏目：(文件名 slug, 订阅标题, 栏目列表页完整 URL)。增删栏目只改这里。
+# 支持多个站点：条目链接和正文里的相对地址按各栏目自己的站点解析。
 SECTIONS = [
-    ("xwdt", "研究生院·新闻动态", "/2874/list.htm"),
-    ("jxgz", "研究生院·教学工作通知", "/2879/list.htm"),
-    ("xwgz", "研究生院·学位工作通知", "/2895/list.htm"),
-    ("xskb", "研究生院·学术看板", "/2884/list.htm"),
-    ("xsgl", "研究生院·学生管理", "/2927/list.htm"),
-    ("jzxj", "研究生院·奖助学金", "/2928/list.htm"),
+    ("xwdt", "研究生院·新闻动态", "https://yjs.aufe.edu.cn/2874/list.htm"),
+    ("jxgz", "研究生院·教学工作通知", "https://yjs.aufe.edu.cn/2879/list.htm"),
+    ("xwgz", "研究生院·学位工作通知", "https://yjs.aufe.edu.cn/2895/list.htm"),
+    ("xskb", "研究生院·学术看板", "https://yjs.aufe.edu.cn/2884/list.htm"),
+    ("xsgl", "研究生院·学生管理", "https://yjs.aufe.edu.cn/2927/list.htm"),
+    ("jzxj", "研究生院·奖助学金", "https://yjs.aufe.edu.cn/2928/list.htm"),
+    ("jwc-zcwj", "教务处·政策文件", "https://jwc.aufe.edu.cn/10354/list.htm"),
+    ("jwc-xwdt", "教务处·新闻动态", "https://jwc.aufe.edu.cn/10355/list.htm"),
+    ("jwc-tzgg", "教务处·通知公告", "https://jwc.aufe.edu.cn/10356/list.htm"),
 ]
 
 LI_RE = re.compile(r"<li\b[^>]*>(.*?)</li>", re.S)
@@ -76,8 +80,12 @@ def attr_escape(text: str) -> str:
     return escape(text, {'"': "&quot;"})
 
 
-def parse_items(html: str) -> list[dict]:
-    """解析列表页里的文章条目（博达 CMS 的 li.news 结构）。"""
+def parse_items(html: str, base: str = BASE) -> list[dict]:
+    """解析列表页里的文章条目。
+
+    兼容两种博达 CMS 模板：研究生院的 li.news（news_title/news_meta）
+    和教务处的 li.list_item（Article_Title/Article_PublishDate）。
+    """
     items: list[dict] = []
     seen: set[str] = set()
     for body in LI_RE.findall(html):
@@ -92,7 +100,7 @@ def parse_items(html: str) -> list[dict]:
         date_match = DATE_RE.search(body)
         if not (title and m and date_match):
             continue
-        link = urljoin(BASE, m.group("href").strip())
+        link = urljoin(base, m.group("href").strip())
         if link in seen:
             continue
         seen.add(link)
@@ -143,8 +151,8 @@ def extract_div(html: str, class_keyword: str) -> str | None:
     return html[start:]
 
 
-def clean_content(raw: str) -> str:
-    """清理正文 HTML：去脚本/样式/注释和内联样式，相对地址转绝对。"""
+def clean_content(raw: str, base: str = BASE) -> str:
+    """清理正文 HTML：去脚本/样式/注释和内联样式，相对地址转绝对（按文章所属站点）。"""
     raw = re.sub(r"<script\b.*?</script>", "", raw, flags=re.S | re.I)
     raw = re.sub(r"<style\b.*?</style>", "", raw, flags=re.S | re.I)
     raw = re.sub(r"<!--.*?-->", "", raw, flags=re.S)
@@ -154,7 +162,7 @@ def clean_content(raw: str) -> str:
         if url.startswith(("http://", "https://", "data:", "#", "mailto:")):
             url_new = url
         else:
-            url_new = urljoin(BASE, url)
+            url_new = urljoin(base, url)
         # 统一输出双引号（URL 中不会出现双引号）
         return f'{attr}="{url_new}"'
 
@@ -173,12 +181,17 @@ def clean_content(raw: str) -> str:
 
 
 def fetch_article_content(url: str) -> str | None:
-    """抓文章页并提取正文 HTML；提取失败返回 None。"""
+    """抓文章页并提取正文 HTML；提取失败返回 None。
+
+    相对地址按文章自身所属站点解析（多站点支持）。
+    """
+    split = urlsplit(url)
+    base = f"{split.scheme}://{split.netloc}"
     html = fetch(url)
     for kw in ("wp_articlecontent", "v_news_content", "vsb_content"):
         raw = extract_div(html, kw)
         if raw:
-            return clean_content(raw)
+            return clean_content(raw, base)
     return None
 
 
@@ -224,7 +237,7 @@ def build_opml(public_base: str, mirror_prefix: str = "") -> str:
         "  </head>",
         "  <body>",
     ]
-    feeds = [(name, f"{public_base}/{slug}.xml", BASE + path) for slug, name, path in SECTIONS]
+    feeds = [(name, f"{public_base}/{slug}.xml", list_url) for slug, name, list_url in SECTIONS]
     feeds.append(("研究生院·全部更新", f"{public_base}/all.xml", BASE + "/"))
     for name, xml_url, html_url in feeds:
         parts.append(
@@ -262,13 +275,14 @@ def main() -> int:
     sections: list[tuple[str, str, str, list[dict]]] = []
     all_items: list[dict] = []
     ok = 0
-    for idx, (slug, name, path) in enumerate(SECTIONS):
-        url = BASE + path
+    for idx, (slug, name, list_url) in enumerate(SECTIONS):
+        url = list_url
         print(f"[{idx + 1}/{len(SECTIONS)}] {name}  {url}")
         if idx:
             time.sleep(random.uniform(*DELAY_RANGE))
         try:
-            items = parse_items(fetch(url))
+            base = f"{urlsplit(url).scheme}://{urlsplit(url).netloc}"
+            items = parse_items(fetch(url), base)
         except Exception as e:  # 单个栏目失败不影响其余栏目
             print(f"    [FAIL] {e}", file=sys.stderr)
             continue
