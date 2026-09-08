@@ -131,6 +131,11 @@ def fetch(url: str) -> str:
             if "/.safeline/" in data:
                 raise RuntimeError("雷池 WAF 拦截页")
             return data
+        except urllib.error.HTTPError as e:
+            if e.code in (403, 429):
+                # 403 通常是持久性访问限制（校内 IP 白名单/频率限制），重试无效，快速失败
+                raise RuntimeError(f"HTTP {e.code} 访问受限（可能仅限校内/频率限制）") from e
+            last_err = e
         except Exception as e:  # 网络类异常统一走退避重试
             last_err = e
     raise RuntimeError(f"重试 {len(RETRY_DELAYS)} 次后仍失败：{url}（{last_err}）")
@@ -181,19 +186,31 @@ def clean_content(raw: str, base: str = BASE) -> str:
     return raw.strip()
 
 
-def fetch_article_content(url: str) -> str | None:
-    """抓文章页并提取正文 HTML；提取失败返回 None。
+def fetch_article_content(url: str) -> tuple[str | None, str | None]:
+    """抓文章页并提取正文 HTML。
 
-    相对地址按文章自身所属站点解析（多站点支持）。
+    返回 (正文HTML, 状态说明)。正文提取失败返回 None，状态说明用于区分：
+    - "ok" 正常拿到正文或确认无正文容器
+    - "campus_only" 页面提示“仅允许校内地址访问”（yjs 校外无法取正文）
     """
     split = urlsplit(url)
     base = f"{split.scheme}://{split.netloc}"
-    html = fetch(url)
+    try:
+        html = fetch(url)
+    except Exception as e:
+        msg = str(e)
+        # 403/校内限制：校外永久无法访问，归类为 campus_only 快速跳过，不反复重试
+        if "403" in msg or "访问受限" in msg:
+            return None, "campus_only"
+        return None, f"fetch_error:{msg}"
+    # 校内 IP 限制提示页：校外无法取正文，标记避免反复重试
+    if "仅允许校内地址访问" in html or "No Permission" in html:
+        return None, "campus_only"
     for kw in ("wp_articlecontent", "v_news_content", "vsb_content"):
         raw = extract_div(html, kw)
         if raw:
-            return clean_content(raw, base)
-    return None
+            return clean_content(raw, base), "ok"
+    return None, "no_content"
 
 
 def build_rss(title: str, link: str, description: str, items: list[dict]) -> str:
@@ -342,20 +359,26 @@ def main() -> int:
         if fetched:
             time.sleep(random.uniform(*ARTICLE_DELAY_RANGE))
         try:
-            content = fetch_article_content(it["link"])
-            if content:
+            content, status = fetch_article_content(it["link"])
+            if status == "ok" and content:
                 it["description"] = content
                 state[it["link"]] = {"desc": content}
                 print(f"    [OK] {it['link']}")
+            elif status in ("campus_only", "no_content"):
+                # 页面无正文容器或仅校内可访问（校外取不到），标记 empty 避免反复重试
+                state[it["link"]] = {"empty": 1, "reason": status}
+                print(f"    [SKIP] {it['link']}（{status}）")
             else:
-                # 页面无正文容器，标记 empty 避免反复重试
-                state[it["link"]] = {"empty": 1}
-                print(f"    [EMPTY] {it['link']}（页面无正文）")
-        except Exception as e:  # 抓取失败：累计失败次数，允许有限次重试
+                # 抓取失败：累计失败次数，允许有限次重试
+                cur = state.get(it["link"], {})
+                fail_n = cur.get("fail", 0) + 1
+                state[it["link"]] = {"fail": fail_n}
+                print(f"    [WARN] 正文抓取失败 {it['link']}（第{fail_n}次）：{status}", file=sys.stderr)
+        except Exception as e:  # 意外异常：累计失败次数
             cur = state.get(it["link"], {})
             fail_n = cur.get("fail", 0) + 1
             state[it["link"]] = {"fail": fail_n}
-            print(f"    [WARN] 正文抓取失败 {it['link']}（第{fail_n}次）：{e}", file=sys.stderr)
+            print(f"    [WARN] 正文抓取异常 {it['link']}（第{fail_n}次）：{e}", file=sys.stderr)
         fetched += 1
     if fetched:
         save_state(state)
