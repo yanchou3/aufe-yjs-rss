@@ -39,8 +39,9 @@ ARTICLE_DELAY_RANGE = (1.5, 3.0)  # 文章页之间的随机间隔（秒）
 RETRY_DELAYS = (8, 20)  # 被拦截后的退避等待（秒）
 MAX_MERGED = 100
 MAX_CONTENT_CHARS = 15000  # 单篇正文截断长度
-BUDGET_FIRST_RUN = 40  # 首轮（无状态文件时）抓正文的篇数预算
-BUDGET_NORMAL = 15  # 常规轮次补抓篇数预算
+BUDGET_FIRST_RUN = 200  # 首轮（无状态文件时）抓正文的篇数预算：覆盖全部文章
+BUDGET_NORMAL = 200  # 常规轮次补抓篇数预算：尽量一轮抓完所有未处理文章
+MAX_FAIL_RETRY = 3  # 同一链接抓正文失败的最多重试轮次，防止永久跳过
 MIRROR_PREFIX = "https://ghproxy.net/"  # 国内镜像代理前缀，用于 feeds-cn.opml
 
 HEADERS = {
@@ -297,12 +298,43 @@ def main() -> int:
         print("所有栏目均抓取失败", file=sys.stderr)
         return 1
 
-    # 为首次出现的文章抓正文（按日期倒序处理，优先最新的）
+    # 正文抓取与恢复：把正文内容持久化到 state，每轮重跑时直接从 state 恢复
+    # （旧版只记录“已尝试”标记、不存正文内容，导致下轮重新解析列表页后正文丢失）
     all_items.sort(key=lambda x: x["dt"], reverse=True)
     state = load_state()
     budget = BUDGET_FIRST_RUN if not state else BUDGET_NORMAL
-    pending = [it for it in all_items if it["link"] not in state]
-    print(f"正文抓取：未处理 {len(pending)} 篇，本轮预算 {budget} 篇")
+    # 兼容旧版 state 值："ok" / 1 → 旧版只标记未存正文，视为“需重抓”；"f<n>" → 失败n次
+    def norm(v):
+        if isinstance(v, dict):
+            return v
+        if v == "ok" or v == 1:
+            # 旧版标记成功但未保存正文，重新抓取以补上正文
+            return {"fail": 0}
+        if isinstance(v, str) and v.startswith("f"):
+            return {"fail": int(v[1:])}
+        return {"fail": 0}
+    state = {k: norm(v) for k, v in state.items()}
+
+    def need_fetch(link: str) -> bool:
+        s = state.get(link, {})
+        if s.get("desc"):
+            return False
+        if s.get("empty"):  # 此前已确认页面无正文，不再重复抓
+            return False
+        return s.get("fail", 0) < MAX_FAIL_RETRY
+
+    # 第 1 步：从 state 恢复已有正文，填充到本次新解析的条目上
+    restored = 0
+    for it in all_items:
+        s = state.get(it["link"])
+        if s and s.get("desc"):
+            it["description"] = s["desc"]
+            restored += 1
+    print(f"正文恢复：从 state 载入 {restored} 篇已有正文")
+
+    # 第 2 步：对缺失正文且可重试的文章抓取（本轮预算内）
+    pending = [it for it in all_items if need_fetch(it["link"])]
+    print(f"正文抓取：待抓 {len(pending)} 篇，本轮预算 {budget} 篇")
     fetched = 0
     for it in pending:
         if fetched >= budget:
@@ -310,14 +342,24 @@ def main() -> int:
         if fetched:
             time.sleep(random.uniform(*ARTICLE_DELAY_RANGE))
         try:
-            it["description"] = fetch_article_content(it["link"])
-        except Exception as e:  # 单篇失败不阻塞，标记已处理避免反复重试
-            print(f"    [WARN] 正文抓取失败 {it['link']}：{e}", file=sys.stderr)
-        state[it["link"]] = 1
+            content = fetch_article_content(it["link"])
+            if content:
+                it["description"] = content
+                state[it["link"]] = {"desc": content}
+                print(f"    [OK] {it['link']}")
+            else:
+                # 页面无正文容器，标记 empty 避免反复重试
+                state[it["link"]] = {"empty": 1}
+                print(f"    [EMPTY] {it['link']}（页面无正文）")
+        except Exception as e:  # 抓取失败：累计失败次数，允许有限次重试
+            cur = state.get(it["link"], {})
+            fail_n = cur.get("fail", 0) + 1
+            state[it["link"]] = {"fail": fail_n}
+            print(f"    [WARN] 正文抓取失败 {it['link']}（第{fail_n}次）：{e}", file=sys.stderr)
         fetched += 1
     if fetched:
         save_state(state)
-        print(f"    已抓正文 {fetched} 篇，state/seen.json 共 {len(state)} 条")
+        print(f"    本轮抓取正文 {fetched} 篇，state/seen.json 共 {len(state)} 条")
 
     names = "、".join(name for _, name, _, _ in sections)
     for slug, name, url, items in sections:
