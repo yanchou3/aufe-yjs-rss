@@ -128,8 +128,10 @@ def fetch(url: str) -> str:
 
 
 def extract_div(html: str, class_keyword: str) -> str | None:
-    """按 class 关键字定位 div，用配对计数取完整内层 HTML。"""
-    m = re.search(r'<div\b[^>]*class="[^"]*' + class_keyword + r'[^"]*"[^>]*>', html, re.I)
+    """按 class 关键字定位 div（兼容单/双引号属性），用配对计数取完整内层 HTML。"""
+    m = re.search(
+        r"<div\b[^>]*class=(['\"])[^'\"]*" + class_keyword + r"[^'\"]*\1[^>]*>", html, re.I
+    )
     if not m:
         return None
     depth = 1
@@ -148,16 +150,20 @@ def clean_content(raw: str) -> str:
     raw = re.sub(r"<!--.*?-->", "", raw, flags=re.S)
 
     def absolutize(m: re.Match) -> str:
-        attr, quote, url = m.group(1), m.group(2), m.group(3)
+        attr, url = m.group(1), m.group(3)
         if url.startswith(("http://", "https://", "data:", "#", "mailto:")):
-            return m.group(0)
-        return f"{attr}={quote}{urljoin(BASE, url)}{quote}"
+            url_new = url
+        else:
+            url_new = urljoin(BASE, url)
+        # 统一输出双引号（URL 中不会出现双引号）
+        return f'{attr}="{url_new}"'
 
     raw = re.sub(r"\b(src|href)=(['\"])([^'\"]+)\2", absolutize, raw)
     raw = re.sub(
-        r'\s+(?:style|class|id|sudyfile-attr|data-layer|original-src|frag|portletmode)="[^"]*"',
+        r"""\s+(?:style|class|id|sudyfile-attr|data-layer|original-src|frag|portletmode)\s*=\s*(?:"[^"]*"|'[^']*')""",
         "",
         raw,
+        flags=re.I,
     )
     raw = re.sub(r"<p\b[^>]*>", "<p>", raw)
     raw = re.sub(r"<img\b[^>]*>", lambda m: m.group(0).replace(" />", ">"), raw)

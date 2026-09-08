@@ -82,6 +82,21 @@ class TestArticleContent(unittest.TestCase):
         self.assertIn("<p>", cleaned)
         self.assertIn("人工智能对经济学研究范式的重构", cleaned)
 
+    def test_single_quoted_content_div(self):
+        # 服务器原始 HTML 的 class 属性是单引号（浏览器会规范成双引号，离线样本易漏）
+        raw_html = (
+            "<div class='read'><div class='wp_articlecontent'>"
+            "<p class='MsoNormal' style='text-indent:32px;'>正文第一段。</p>"
+            "<p><img src='/__local/abc.png' style='width:600px;'></p>"
+            "</div></div>"
+        )
+        raw = extract_div(raw_html, "wp_articlecontent")
+        self.assertIsNotNone(raw)
+        cleaned = clean_content(raw)
+        self.assertIn("正文第一段", cleaned)
+        self.assertIn('src="https://yjs.aufe.edu.cn/__local/abc.png"', cleaned)
+        self.assertNotIn("style=", cleaned)
+
 
 if __name__ == "__main__":
     unittest.main()
